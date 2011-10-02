@@ -8,4 +8,4 @@ hg add
 hg commit => mettre une annotation
 hg push => mise a jour du serveur
 
-
+mise a jour de .hg/hgrc
