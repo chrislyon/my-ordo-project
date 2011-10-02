@@ -29,11 +29,11 @@ sav:
 
 .PHONY: status
 status: clean
-	find . -print -exec svn add {} \;
-	svn status
+	hg add
+	hg status
 
 .PHONY: commit
-commit: clean
-	svn commit -m "Modif du $(long_ts)"
+commit: clean status
+	hg commit
 
 
