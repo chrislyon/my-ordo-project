@@ -1,7 +1,6 @@
 
 import sys
 from multiprocessing.connection import Client
-from array import array
 
 from job import Job
 
@@ -19,7 +18,7 @@ else:
     print "Srv => ", conn.recv()
     j=Job()
     j.name='TEST'
-    j.cmd="ls -l"
+    j.cmd="ls -l ; sleep 20"
     conn.send(j)
     j = conn.recv()
     j.pr()
