@@ -29,14 +29,27 @@
 ## ----------------------------------------
 
 from multiprocessing.connection import Listener
+from multiprocessing import Process, Queue
+
 from array import array
 import logging
+import time
 
 from  worker import Worker
 from job import Job
 
 def log(msg):
     print ">>> %s " %  msg
+
+def do_request( conn ):
+    conn.send("Ok send your job")
+    j = conn.recv()
+    if isinstance(j, Job):
+        w = Worker(j)
+        w.work()
+        conn.send(j)
+    conn.send('Ok see you soon')
+    conn.close()
 
 SHUTDOWN=False
 PASSWORD='secret password'
@@ -56,16 +69,11 @@ while not SHUTDOWN:
     if cmd == "shutdown":
         SHUTDOWN = True
         conn.send("shutdown transmitted")
+        time.sleep(10)
+        conn.close()
     elif cmd == "job":
-        conn.send("Ok send your job")
-        j = conn.recv()
-        if isinstance(j, Job):
-            w = Worker(j)
-            w.work()
-            conn.send(j)
-    conn.send('Ok see you soon')
-    conn.close()
-
+        p = Process(target=do_request, args=(conn,))
+        p.start()
 ##
 listener.close()
 log( "Ending prog" )

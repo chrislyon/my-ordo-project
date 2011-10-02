@@ -6,7 +6,7 @@ long_ts=$(shell date "+%x %X")
 
 .PHONY: run
 run: clean
-	twistd -y $(PROG)
+	$(PYTHON) $(PROG)
 
 .PHONY: clean
 clean:
