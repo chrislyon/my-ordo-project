@@ -1,0 +1,11 @@
+
+Pour obtenir une copie du repository : 
+hg clone https://chris.lyon.tech@code.google.com/p/my-ordo-project/
+
+ensuite modif
+
+hg add
+hg commit => mettre une annotation
+hg push => mise a jour du serveur
+
+
