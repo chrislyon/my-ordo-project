@@ -32,6 +32,7 @@ from multiprocessing.connection import Listener
 from multiprocessing import Process, Queue
 
 from array import array
+## pas sur ...
 import logging
 import time
 
