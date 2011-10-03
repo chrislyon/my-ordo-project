@@ -76,18 +76,28 @@ while not SHUTDOWN:
     conn.send('Here is the server waiting for cmd ...')
     cmd = conn.recv()
     logger.info( "cmd=%s" % cmd)
+    logger.info( "p=%s" % len(p_list))
     if cmd == "shutdown":
         SHUTDOWN = True
         conn.send("shutdown transmitted")
-        time.sleep(5)
+        time.sleep(3)
         conn.close()
     elif cmd == "list":
-        conn.send("liste")
+        conn.send("liste des processus en cours : %s " % len(p_list))
+        l = []
+        for p in p_list:
+            l.append( (p.name, p.is_alive(), p.pid ) )
+            logger.debug(p.name, p.is_alive(), p.pid, p.returncode )
+        logger.info(l)
+        conn.send(l)
         conn.close()
     elif cmd == "job":
         p = Process(target=do_request, args=(conn,))
         p_list.append(p)
         p.start()
+    else:
+        conn.send("Commande inconnue : %s" % cmd)
+        conn.close()
 ##
 listener.close()
 logger.info( "Ending prog" )
