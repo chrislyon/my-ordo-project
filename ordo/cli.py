@@ -19,7 +19,7 @@ else:
     print "Srv => ", conn.recv()
     j=Job()
     j.name='TEST'
-    j.cmd="ls -l ; sleep 20"
+    j.cmd="ls -l ; sleep 5"
     #j.cmd="ls -l "
     conn.send(j)
     j = conn.recv()
