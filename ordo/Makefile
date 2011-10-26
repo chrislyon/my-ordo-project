@@ -3,6 +3,7 @@
 PROG=agent.py
 ts=$(shell date "+%Y%m%d_%X")
 long_ts=$(shell date "+%x %X")
+PYTHON=$(shell which python)
 
 .PHONY: run
 run: clean

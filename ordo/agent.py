@@ -44,13 +44,23 @@ from job import Job
 ## ---------------------------
 def do_request( conn ):
     conn.send("Ok send your job")
-    j = conn.recv()
-    if isinstance(j, Job):
-        w = Worker(j)
-        w.work()
-        conn.send(j)
-    conn.send('Ok see you soon')
-    conn.close()
+    run = False
+    try:
+        j = conn.recv()
+        run = True
+    except:
+        logger.info("Probleme reception job")
+
+    ## ya pas eu d'erreur 
+    if run:
+        if isinstance(j, Job):
+            w = Worker(j)
+            w.work()
+            conn.send(j)
+        conn.send('Ok see you soon')
+        conn.close()
+    else:
+        conn.close()
 
 ## ---------------------------
 ## MAIN
@@ -74,9 +84,16 @@ while not SHUTDOWN:
     conn = listener.accept()
     logger.info ('connection accepted from %s '  % str(listener.last_accepted))
     conn.send('Here is the server waiting for cmd ...')
-    cmd = conn.recv()
+    try:
+        cmd = conn.recv()
+    except EOFError:
+        logger.info("Connexion ended by peer")
+        conn.close()
+        continue
+        
     logger.info( "cmd=%s" % cmd)
     logger.info( "p=%s" % len(p_list))
+
     if cmd == "shutdown":
         SHUTDOWN = True
         conn.send("shutdown transmitted")
