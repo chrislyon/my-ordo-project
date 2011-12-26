@@ -43,8 +43,11 @@ from job import Job
 ##  Execution d'une commande
 ## ---------------------------
 def do_request( conn ):
+    ## Envoi d'un message d'invite
+    logger.info("demarrage d'une requete")
     conn.send("Ok send your job")
     run = False
+    logger.info("Attente du job")
     try:
         j = conn.recv()
         run = True
@@ -53,13 +56,21 @@ def do_request( conn ):
 
     ## ya pas eu d'erreur 
     if run:
+        logger.info("Reception du job %s " % j)
         if isinstance(j, Job):
+            conn.send('Job receive')
+            logger.info("Creation Worker")
             w = Worker(j)
+            logger.info("Lancement Worker")
             w.work()
+            logger.info("Worker fini")
+            conn.send('Job finishsending result ')
             conn.send(j)
         conn.send('Ok see you soon')
         conn.close()
     else:
+        logger.info("Erreur not a job %s " % j)
+        conn.send('Error not a job')
         conn.close()
 
 ## ---------------------------
@@ -104,7 +115,7 @@ while not SHUTDOWN:
         l = []
         for p in p_list:
             l.append( (p.name, p.is_alive(), p.pid ) )
-            logger.debug(p.name, p.is_alive(), p.pid, p.returncode )
+            logger.debug(p.name, p.is_alive(), p.pid )
         logger.info(l)
         conn.send(l)
         conn.close()

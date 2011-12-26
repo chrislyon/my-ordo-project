@@ -63,6 +63,7 @@ class SimpleClient(cmd.Cmd):
             p = conn.recv()
             for l in p:
                 print l
+        conn=None
 
     ## --------------------------
     ## Envoi d'un job au serveur
@@ -76,17 +77,29 @@ class SimpleClient(cmd.Cmd):
             if r[0] and r[1]:
                 print "Sending JOB : %s" % r[0]
                 conn.send('job')
+                ## On doit recevoir  Ok send your job
                 print "Srv => ", conn.recv()
                 j=Job()
                 j.name=r[0]
                 j.cmd=r[1]
                 conn.send(j)
+                ## On doit recevoir Job receiveing ou erreur "
+                print "Srv => ", conn.recv()
+                ## On doit recevoir Job job finish"
+                print "Srv => ", conn.recv()
+                ## On doit recevoir le job
                 j = conn.recv()
+                ## On doit recevoir Invite de fin OK see your soon"
+                print "Srv => ", conn.recv()
+                ## la connexion doit se terminer
+                ## Affichage du resultat
                 j.pr()
             else:
-                print "Job incorrecte [%s] [%s]" % (ret[0], ret[1])
+                print "Job incorrecte [%s] [%s]" % (r[0], r[1])
         else:
             print "Not connected"
+        ## Dans tout les cas la connexion est ferme
+        conn=None
 
     ## ----------------------------------------
     ## Affichage des parametres de connexion
@@ -100,10 +113,12 @@ class SimpleClient(cmd.Cmd):
         return self.do_EOF(line)
     
     def do_EOF(self, line):
+        global conn
         if conn:
             conn.close()
             print "Closing Connexion ..."
         print "See you soon ... "
+        conn = None
         return True
 
     ## Pour exemple
