@@ -2,22 +2,34 @@
 ## Client ligne de commande
 ## -------------------------
 
+# Permet de controler un agent
+
 import sys
 from multiprocessing.connection import Client
 import time
+import ConfigParser
+import io
 
 from job import Job
 import cmd
 import pdb
 
-conn = None
+params = {}
 
-params = {
-    'SERVEUR' : 'localhost',
-    'PORT' : 6000,
-    'PASSWORD' : 'secret password'
-}
+default_config = """
+[TEST_AGENT]
+SERVEUR = localhost
+PORT = 6000
+PASSWORD = secret password
+"""
 
+
+def set_params(params):
+    config = ConfigParser.RawConfigParser()
+    config.readfp(io.BytesIO(default_config))
+    params['SERVEUR'] = config.get('TEST_AGENT', 'SERVEUR')
+    params['PORT'] = config.getint('TEST_AGENT', 'PORT')
+    params['PASSWORD'] = config.get('TEST_AGENT', 'PASSWORD')
 
 class SimpleClient(cmd.Cmd):
     """Simple command processor example."""
@@ -29,22 +41,26 @@ class SimpleClient(cmd.Cmd):
     ## ------------------------
     ## Effectue une connexion
     ## ------------------------
-    def do_conn(self,line):
-        global conn
+    ## Le parametre serveur est pour plus tard
+    def conn(self, serveur=None):
         address = (params['SERVEUR'], params['PORT'])
+        print "Connecting : ", address
+        print "Params = ", params
         try:
             conn = Client(address, authkey=params['PASSWORD'])
             print "Connexion etablie"
+            ## Reception de l'invite du serveur
+            print conn.recv()
+            return conn
         except:
             print "Erreur connexion"
-        ## Reception de l'invite du serveur
-        print conn.recv()
+            return None
 
     ## ------------------------------
     ## envoi un shutdown au serveur
     ## ------------------------------
     def do_shutdown(self, line):
-        global conn
+        conn = self.conn()
         if conn:
             conn.send("shutdown")
             conn.close()
@@ -56,7 +72,7 @@ class SimpleClient(cmd.Cmd):
     ## Liste des processes
     ## --------------------------
     def do_list(self,line):
-        global conn
+        conn = self.conn()
         if conn:
             conn.send('list')
             print "Srv => ", conn.recv() # Nb process
@@ -69,7 +85,7 @@ class SimpleClient(cmd.Cmd):
     ## Envoi d'un job au serveur
     ## --------------------------
     def do_job(self, line):
-        global conn
+        conn = self.conn()
         if conn:
             #print "Line = %s" % line
             r = cmd.Cmd.parseline(self, line)
@@ -113,12 +129,7 @@ class SimpleClient(cmd.Cmd):
         return self.do_EOF(line)
     
     def do_EOF(self, line):
-        global conn
-        if conn:
-            conn.close()
-            print "Closing Connexion ..."
         print "See you soon ... "
-        conn = None
         return True
 
     ## Pour exemple
@@ -126,67 +137,6 @@ class SimpleClient(cmd.Cmd):
         print "hello"
 
 if __name__ == '__main__':
+    pdb.set_trace()
+    set_params(params)
     SimpleClient().cmdloop("Bienvenue ...")
-
-### -------------------------------------------
-### Client de base pour transmettre des infos
-### aux composants
-### -------------------------------------------
-#
-#import sys
-#from multiprocessing.connection import Client
-#import time
-#
-#from job import Job
-#import pdb
-#
-#SERVEUR='localhost'
-#PORT=6000
-#PASSWORD='secret password'
-#address = (SERVEUR, PORT)
-#conn = Client(address, authkey=PASSWORD)
-#
-#print conn.recv()   # Entete du serveur
-#
-#if len(sys.argv) > 1 :
-#    cmd=sys.argv[1]
-#    if cmd == 'j1':
-#        print "Cli : JOB1"
-#        conn.send('job')
-#        print "Srv => ", conn.recv()
-#        j=Job()
-#        j.name='TYPE JOB 1'
-#        j.cmd="ls -l ; sleep 55"
-#        #j.cmd="ls -l "
-#        conn.send(j)
-#        j = conn.recv()
-#        j.pr()
-#        conn.close()
-#    elif cmd == 'j2':
-#        print "Cli : JOB2"
-#        conn.send('job')
-#        print "Srv => ", conn.recv()
-#        j=Job()
-#        j.name='TYPE JOB 2'
-#        j.cmd="ls -l ; sleep 25"
-#        #j.cmd="ls -l "
-#        conn.send(j)
-#        j = conn.recv()
-#        j.pr()
-#        conn.close()
-#    else:
-#        print "Sending ... %s " % cmd
-#        conn.send(cmd)
-#        print "Srv => ", conn.recv()
-#        conn.close()
-#else:
-#    #pdb.set_trace()
-#    print "Cli => liste"
-#    conn.send('list')
-#    print "Srv => ", conn.recv() # Nb process
-#    p = conn.recv()
-#    for l in p:
-#        print l
-#    conn.close()
-#
-#
