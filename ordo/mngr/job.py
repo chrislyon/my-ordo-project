@@ -16,6 +16,7 @@
 ##----------------------------------------------------
 
 import yaml
+import pdb
 
 class Job(object):
     def __init__(self, name=None, cmd=None, args=None):
@@ -74,6 +75,7 @@ class Job(object):
 
 
 if __name__ == '__main__':
+    pdb.set_trace()
     j = Job()
     j.name = "TOTO"
     j.cmd = "ls -l ; sleep 0"
@@ -82,10 +84,13 @@ if __name__ == '__main__':
 
     j2 = yaml.load(jy)
 
-    j.from_y(jy)
+    del j
+
+    j = Job()
+    j = j.from_y(jy)
 
     print jy
-    print j2
+    print j2.pr()
     print j
     print j.pr()
 
