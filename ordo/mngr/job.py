@@ -87,4 +87,5 @@ if __name__ == '__main__':
     print jy
     print j2
     print j
+    print j.pr()
 

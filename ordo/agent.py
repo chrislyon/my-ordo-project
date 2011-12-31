@@ -23,6 +23,8 @@
 ## ---------------------------------------------
 """
     Composant Agent 
+    son role est d'executer les jobs sur le serveur ou il est lancer
+    
 """
 ## ----------------------------------------
 ## Issue des exemples de multiprocessing
@@ -80,9 +82,9 @@ def do_request( conn ):
 logger = multiprocessing.log_to_stderr()
 logger.setLevel(logging.INFO)
 
-SHUTDOWN=False
-PASSWORD='secret password'
-PORT=6000
+SHUTDOWN = False
+PASSWORD = 'secret password'
+PORT = 6000
 
 logger.info ("Starting listener")
 
