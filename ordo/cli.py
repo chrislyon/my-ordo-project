@@ -27,10 +27,12 @@
 
 from multiprocessing.connection import Client
 from multiprocessing import Process, Manager
+from multiprocessing.managers import BaseManager
 import ConfigParser
 import io
 
 from job import Job
+from job_list import JobList
 import cmd
 import pdb
 
@@ -63,7 +65,7 @@ def run_batch(batch, conn, b_list):
     ## On doit recevoir le job
     ret = conn.recv()
     #print ret.pr()
-    b_list.append( ret )
+    b_list.add(ret)
     ## On doit recevoir Invite de fin OK see your soon"
     msg = conn.recv()
     ## la connexion doit se terminer
@@ -77,6 +79,10 @@ def set_params(params):
     params['PORT'] = config.getint('TEST_AGENT', 'PORT')
     params['PASSWORD'] = config.get('TEST_AGENT', 'PASSWORD')
 
+class MyManager(BaseManager):
+    pass
+
+MyManager.register('BList', JobList)
 
 class SimpleClient(cmd.Cmd):
     """Simple command processor example."""
@@ -84,8 +90,9 @@ class SimpleClient(cmd.Cmd):
     ## -----------------------------
     ## Declarations des Managers
     ## -----------------------------
-    manager = Manager()
-    b_list = manager.list()
+    manager = MyManager()
+    manager.start()
+    b_list = manager.BList()
 
     def cmdloop(self, intro=None):
         #print 'cmdloop(%s)' % intro
@@ -195,14 +202,13 @@ class SimpleClient(cmd.Cmd):
    ## -------------------------
     def do_blist(self, line):
         """ Liste des batchs """
-        for j in self.b_list:
-            print "j=%s" % j
+        #for k,j in self.b_list.items():
+        #    print "k=%s j=%s" % (k,j)
+        self.b_list.pr()
 
     def do_bpr(self, line):
         """ Etat des batchs """
-        for b in self.b_list:
-            print "Job : %s " % b
-            b.pr()
+        self.b_list.pr(line)
 
     ## ----------------------------------------
     ## Affichage des parametres de connexion
@@ -221,6 +227,9 @@ class SimpleClient(cmd.Cmd):
         """ Fin du bal ... """
         print "See you soon ... "
         return True
+
+    def emptyline(self):
+        pass
 
     ## Pour exemple
     def do_greet(self, line):
