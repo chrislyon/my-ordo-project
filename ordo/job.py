@@ -15,7 +15,7 @@
 ## (c)  chris 2011
 ##----------------------------------------------------
 
-import yaml
+#import yaml
 
 class Job(object):
     def __init__(self, name=None, cmd=None, args=None):
@@ -65,12 +65,12 @@ class Job(object):
     def __repr__(self):
         return "< %s %s %s >" % (self.name, self.status, self.returncode)
 
-    def to_y(self):
-        return yaml.dump(self)
+#    def to_y(self):
+#        return yaml.dump(self)
 
-    def from_y(self, y):
-        self = yaml.load(y)
-        return self
+#    def from_y(self, y):
+#        self = yaml.load(y)
+#        return self
 
 
 if __name__ == '__main__':
@@ -78,13 +78,13 @@ if __name__ == '__main__':
     j.name = "TOTO"
     j.cmd = "ls -l ; sleep 0"
 
-    jy = j.to_y()
+#    jy = j.to_y()
 
-    j2 = yaml.load(jy)
+#    j2 = yaml.load(jy)
 
-    j.from_y(jy)
+#    j.from_y(jy)
 
-    print jy
-    print j2
-    print j
+#    print jy
+#    print j2
+#    print j
 

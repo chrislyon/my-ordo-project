@@ -31,6 +31,10 @@ from multiprocessing.managers import BaseManager
 import ConfigParser
 import io
 
+import elixir
+import model
+from model import *
+
 from job import Job
 from job_list import JobList
 import cmd
@@ -39,12 +43,50 @@ import pdb
 ## Les parametres
 params = {}
 
+metadata = elixir.metadata
+
 default_config = """
-[TEST_AGENT]
-SERVEUR = localhost
-PORT = 6000
-PASSWORD = secret password
+[TEST]
+DB_FILE = db/data_ordo.sqlite
 """
+
+
+## ----------------------------
+## definition des parametres
+## ----------------------------
+def set_params(params):
+    """ Pour l'instant defini les parametres """
+    print "Reading parameters "
+    config = ConfigParser.RawConfigParser()
+    config.readfp(io.BytesIO(default_config))
+    params['DB_FILE'] = config.get('TEST', 'DB_FILE')
+
+## ----------------------
+## Mise en route BDD
+## ----------------------
+def setup_db(meta):
+    datafile = params['DB_FILE']
+    print "Using database : %s " % datafile
+    meta.bind = "sqlite:///"+datafile
+
+    meta.bind.echo = True
+    meta.bind.echo = False
+
+    elixir.setup_all()
+    
+def setup_default(params):
+    print "setting default parameters"
+    a = model.Agent.query.first()
+    params['DEFAULT_AGENT'] = a
+    print "Default agent = %s " % a 
+
+### ---------------------------------------------
+### Le manager sert a gerer les objets transmis
+### ---------------------------------------------
+class MyManager(BaseManager):
+    pass
+
+MyManager.register('BList', JobList)
 
 
 ## ---------------------
@@ -71,19 +113,10 @@ def run_batch(batch, conn, b_list):
     ## la connexion doit se terminer
     conn = None
 
-def set_params(params):
-    """ Pour l'instant defini les parametres """
-    config = ConfigParser.RawConfigParser()
-    config.readfp(io.BytesIO(default_config))
-    params['SERVEUR'] = config.get('TEST_AGENT', 'SERVEUR')
-    params['PORT'] = config.getint('TEST_AGENT', 'PORT')
-    params['PASSWORD'] = config.get('TEST_AGENT', 'PASSWORD')
 
-class MyManager(BaseManager):
-    pass
-
-MyManager.register('BList', JobList)
-
+## --------------------------
+## Client ligne de commande
+## --------------------------
 class SimpleClient(cmd.Cmd):
     """Simple command processor example."""
      
@@ -103,11 +136,15 @@ class SimpleClient(cmd.Cmd):
     ## ------------------------
     ## Le parametre serveur est pour plus tard
     def conn(self, serveur=None):
-        address = (params['SERVEUR'], params['PORT'])
+        agent = params['DEFAULT_AGENT']
+        print "Mot de passe <%s>" % password
+        address = (agent.server_ip, agent.server_port)
         print "Connecting : ", address
         print "Params = ", params
         try:
-            conn = Client(address, authkey=params['PASSWORD'])
+            ## important le str(agent.password) est necessaire
+            ## sinon pas reconnu
+            conn = Client(address, authkey=str(agent.password))
             print "Connexion etablie"
             ## Reception de l'invite du serveur
             print conn.recv()
@@ -239,5 +276,7 @@ class SimpleClient(cmd.Cmd):
 if __name__ == '__main__':
     #pdb.set_trace()
     set_params(params)
+    setup_db(metadata)
+    setup_default(params)
     SimpleClient().cmdloop("Bienvenue ...")
 

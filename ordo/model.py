@@ -4,13 +4,10 @@
 
 import os
 import datetime
+import elixir
 from elixir import *
 
-datafile = "db/data_ordo.sqlite"
-metadata.bind = "sqlite:///"+datafile
-
-metadata.bind.echo = True
-metadata.bind.echo = False
+metadata = elixir.metadata
 
 class Agent(Entity):
     using_options(tablename='AGENT')
@@ -19,6 +16,11 @@ class Agent(Entity):
     server_ip = Field(Unicode(30))
     server_name = Field(Unicode(30))
     server_port = Field(Integer)
+    password = Field(String(20))
+    default_agent = Field(Boolean)
+
+    def __repr__(self):
+        return "<Agent : %s>" % self.name
 
 class Job(Entity):
     using_options(tablename='JOB')
@@ -48,11 +50,6 @@ class ExecLog(Entity):
     ex_type = Field(Unicode(10))
     ex_comment = Field(UnicodeText)
 
-def init():
-    os.remove( datafile )
-    setup_all()
-    create_all()
-
 def populate():
     ## create d'un agent 
     a1 = Agent(name=u"Agent1")
@@ -60,31 +57,31 @@ def populate():
     a1.server_name = u"localhost"
     a1.server_ip = u"127.0.0.1"
     a1.server_port = 6000
+    a1.default_agent = True
+    a1.password = "SECRET"
     session.commit()
 
-def test():
+def init_from_scratch():
+    datafile = "db/data_ordo.sqlite"
     if os.path.exists( datafile ):
         print "Effacement fichier de test %s " % datafile
         os.remove( datafile )
+    metadata.bind = "sqlite:///"+datafile
+
+    metadata.bind.echo = True
+    metadata.bind.echo = False
     setup_all()
     create_all()
-    ## Creation d'un agent
-    a1 = Agent(name=u"Agent1")
-    a1.description = u"Agent pour test"
-    a1.server_name = u"localhost"
-    a1.server_ip = u"127.0.0.1"
-    a1.server_port = 6000
+    populate()
 
-    ## Creons quelques job pour voir
-    j1 = Job(name=u"TEST1", cmd = u"ls -l" )
-    j1.description = u"test de job pour valider la base de donnees"
-    ex1 = JobExec( job = j1 )
-    ex1.start_date = datetime.datetime.now()
-    ex1.end_date = datetime.datetime.now()
-    j1.job_exec.append( ex1 )
-    session.commit()
+def test():
+    metadata.bind =  "sqlite:///db/data_ordo.sqlite"
+    setup_all()
+    a =  Agent.query.first()
+    print a.name, a.description
         
 
 if __name__ == '__main__':
+    #init_from_scratch()
+    test()
     pass
-    #test()

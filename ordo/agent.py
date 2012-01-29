@@ -26,6 +26,9 @@
     son role est d'executer les jobs sur le serveur ou il est lancer
     
 """
+
+#TODO : quand le mot de passe est pas bon ca plante ...
+
 ## ----------------------------------------
 ## Issue des exemples de multiprocessing
 ## ----------------------------------------
@@ -66,7 +69,7 @@ def do_request( conn ):
             logger.info("Lancement Worker")
             w.work()
             logger.info("Worker fini")
-            conn.send('Job finishsending result ')
+            conn.send('Job finish sending result ')
             conn.send(j)
         conn.send('Ok see you soon')
         conn.close()
@@ -83,7 +86,7 @@ logger = multiprocessing.log_to_stderr()
 logger.setLevel(logging.INFO)
 
 SHUTDOWN = False
-PASSWORD = 'secret password'
+PASSWORD = "SECRET"
 PORT = 6000
 
 logger.info ("Starting listener")
