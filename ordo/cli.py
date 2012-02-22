@@ -76,9 +76,12 @@ def setup_db(meta):
     
 def setup_default(params):
     print "setting default parameters"
-    a = model.Agent.query.first()
-    params['DEFAULT_AGENT'] = a
-    print "Default agent = %s " % a 
+    a = model.Agent.query.filter_by(default_agent = True).one()
+    if a :
+        params['DEFAULT_AGENT'] = a
+        print "Default agent = %s " % a 
+    else:
+        print "No default agent set ..."
 
 ### ---------------------------------------------
 ### Le manager sert a gerer les objets transmis
@@ -99,6 +102,7 @@ def run_batch(batch, conn, b_list):
     conn.send('job')
     ## On doit recevoir  Ok send your job
     msg = conn.recv()
+    ## Envoi du job
     conn.send(batch)
     ## On doit recevoir Job receiveing ou erreur "
     msg = conn.recv()
@@ -106,8 +110,13 @@ def run_batch(batch, conn, b_list):
     msg = conn.recv()
     ## On doit recevoir le job
     ret = conn.recv()
-    #print ret.pr()
-    b_list.add(ret)
+    if isinstance(ret, Job):
+        print ret.pr()
+        b_list.add(ret)
+        ## On doit recevoir finish result
+        msg = conn.recv()
+    else:
+        print "Not a job : %s " % ret
     ## On doit recevoir Invite de fin OK see your soon"
     msg = conn.recv()
     ## la connexion doit se terminer
@@ -137,7 +146,7 @@ class SimpleClient(cmd.Cmd):
     ## Le parametre serveur est pour plus tard
     def conn(self, serveur=None):
         agent = params['DEFAULT_AGENT']
-        print "Mot de passe <%s>" % password
+        print "Mot de passe <%s>" % agent.password
         address = (agent.server_ip, agent.server_port)
         print "Connecting : ", address
         print "Params = ", params
@@ -168,15 +177,25 @@ class SimpleClient(cmd.Cmd):
     ## --------------------------
     ## Liste des processes
     ## --------------------------
-    def do_list(self,line):
-        conn = self.conn()
-        if conn:
-            conn.send('list')
-            print "Srv => ", conn.recv() # Nb process
-            p = conn.recv()
-            for l in p:
-                print l
-        conn=None
+    def do_list(self, line):
+        #print "Line = %s" % line
+        r = cmd.Cmd.parseline(self, line)
+        sub = r[0]
+
+        if sub == 'process':
+            conn = self.conn()
+            if conn:
+                conn.send('list')
+                print "Srv => ", conn.recv() # Nb process
+                p = conn.recv()
+                for l in p:
+                    print l
+            conn=None
+        elif sub == 'agent':
+            for ag in Agent.query.all():
+                print ag
+        else:
+            print "Inconnue : %s / %s" % (sub, r)
 
     ## --------------------------
     ## Envoi d'un job au serveur
@@ -198,15 +217,20 @@ class SimpleClient(cmd.Cmd):
                 conn.send(j)
                 ## On doit recevoir Job receiveing ou erreur "
                 print "Srv => ", conn.recv()
-                ## On doit recevoir Job job finish"
+                ## On doit recevoir Job job finish sending result"
                 print "Srv => ", conn.recv()
                 ## On doit recevoir le job
                 j = conn.recv()
+                ## On doit recevoir result transmit
+                print "Srv => ", conn.recv()
                 ## On doit recevoir Invite de fin OK see your soon"
                 print "Srv => ", conn.recv()
                 ## la connexion doit se terminer
                 ## Affichage du resultat
-                j.pr()
+                if isinstance(j, Job):
+                    j.pr()
+                else:
+                    print "Not a job %s " % j
             else:
                 print "Job incorrecte [%s] [%s]" % (r[0], r[1])
         else:
@@ -245,7 +269,10 @@ class SimpleClient(cmd.Cmd):
 
     def do_bpr(self, line):
         """ Etat des batchs """
-        self.b_list.pr(line)
+        try:
+            self.b_list.pr(line)
+        except:
+            print "Batch %s inexistant ..." % line
 
     ## ----------------------------------------
     ## Affichage des parametres de connexion
@@ -267,6 +294,12 @@ class SimpleClient(cmd.Cmd):
 
     def emptyline(self):
         pass
+
+    def do_test(self, line):
+        print "Line = %s" % line
+        r = cmd.Cmd.parseline(self, line)
+        print r
+        
 
     ## Pour exemple
     def do_greet(self, line):

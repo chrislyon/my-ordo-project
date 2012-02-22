@@ -28,6 +28,8 @@
 """
 
 #TODO : quand le mot de passe est pas bon ca plante ...
+#       un job pas fini n'apparait pas dans la liste
+#       les " mettent la grouille
 
 ## ----------------------------------------
 ## Issue des exemples de multiprocessing
@@ -71,8 +73,9 @@ def do_request( conn ):
             logger.info("Worker fini")
             conn.send('Job finish sending result ')
             conn.send(j)
-        conn.send('Ok see you soon')
-        conn.close()
+            conn.send('result transmit')
+            conn.send('OK see you soon')
+            conn.close()
     else:
         logger.info("Erreur not a job %s " % j)
         conn.send('Error not a job')
@@ -125,9 +128,11 @@ while not SHUTDOWN:
         conn.send(l)
         conn.close()
     elif cmd == "job":
+        logger.info("Start JOB")
         p = Process(target=do_request, args=(conn,))
         p_list.append(p)
         p.start()
+        logger.info("Job started")
     else:
         conn.send("Commande inconnue : %s" % cmd)
         conn.close()

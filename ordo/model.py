@@ -19,6 +19,9 @@ class Agent(Entity):
     password = Field(String(20))
     default_agent = Field(Boolean)
 
+    def liste(self):
+        return []
+
     def __repr__(self):
         return "<Agent : %s>" % self.name
 
